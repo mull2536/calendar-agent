@@ -23,6 +23,11 @@ CONFIRMATION_TIMEOUT = int(os.getenv('CONFIRMATION_TIMEOUT', '300'))
 # Google Calendar API scopes
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
+# Calendar ID (email address of the calendar to access)
+# For service accounts, this should be the email of the shared calendar
+# For OAuth, use 'primary' to access the authenticated user's calendar
+CALENDAR_ID = os.getenv('CALENDAR_ID', 'primary')
+
 # Validate required configuration
 def validate_config():
     """Validate that all required configuration is present"""

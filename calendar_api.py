@@ -3,6 +3,7 @@ import pickle
 from datetime import datetime, timedelta
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 import pytz
@@ -14,14 +15,28 @@ SCOPES = config.SCOPES
 def get_calendar_service():
     """
     Authenticate and return Google Calendar service
+    Supports both Service Account and OAuth authentication
     """
     creds = None
-    
+
+    # Try Service Account first (preferred for server deployments)
+    service_account_file = 'service-account.json'
+    if os.path.exists(service_account_file):
+        print(f"Using service account authentication from {service_account_file}")
+        creds = service_account.Credentials.from_service_account_file(
+            service_account_file, scopes=SCOPES)
+        # Service account credentials are always valid, no need to refresh
+        service = build('calendar', 'v3', credentials=creds)
+        return service
+
+    # Fall back to OAuth if no service account
+    print("No service account found, using OAuth authentication")
+
     # The file token.pickle stores the user's access and refresh tokens
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
-    
+
     # If there are no (valid) credentials available, let the user log in
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -33,11 +48,11 @@ def get_calendar_service():
                 )
             flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
             creds = flow.run_local_server(port=0)
-        
+
         # Save the credentials for the next run
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
-    
+
     service = build('calendar', 'v3', credentials=creds)
     return service
 
@@ -70,7 +85,7 @@ def list_events(start_time=None, end_time=None, max_results=10):
     
     # Call the Calendar API
     events_result = service.events().list(
-        calendarId='primary',
+        calendarId=config.CALENDAR_ID,
         timeMin=time_min,
         timeMax=time_max,
         maxResults=max_results,
@@ -120,7 +135,7 @@ def create_event(title, start_time, end_time, location=None, description=None, a
     if attendees:
         event['attendees'] = [{'email': email} for email in attendees]
     
-    created_event = service.events().insert(calendarId='primary', body=event).execute()
+    created_event = service.events().insert(calendarId=config.CALENDAR_ID, body=event).execute()
     return created_event
 
 
@@ -138,7 +153,7 @@ def update_event(event_id, title=None, start_time=None, end_time=None, location=
     service = get_calendar_service()
     
     # Get the existing event
-    event = service.events().get(calendarId='primary', eventId=event_id).execute()
+    event = service.events().get(calendarId=config.CALENDAR_ID, eventId=event_id).execute()
     
     # Update fields if provided
     if title:
@@ -166,7 +181,7 @@ def update_event(event_id, title=None, start_time=None, end_time=None, location=
         event['attendees'] = [{'email': email} for email in attendees]
     
     updated_event = service.events().update(
-        calendarId='primary',
+        calendarId=config.CALENDAR_ID,
         eventId=event_id,
         body=event
     ).execute()
@@ -185,7 +200,7 @@ def delete_event(event_id):
         True if successful
     """
     service = get_calendar_service()
-    service.events().delete(calendarId='primary', eventId=event_id).execute()
+    service.events().delete(calendarId=config.CALENDAR_ID, eventId=event_id).execute()
     return True
 
 

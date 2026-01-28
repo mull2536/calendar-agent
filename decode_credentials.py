@@ -27,10 +27,13 @@ def decode_file_from_env(env_var_name, output_filename):
 if __name__ == "__main__":
     print("Decoding credentials from environment variables...")
 
-    # Decode credentials.json
-    decode_file_from_env('GOOGLE_CREDENTIALS_BASE64', 'credentials.json')
-
-    # Decode token.pickle
-    decode_file_from_env('GOOGLE_TOKEN_BASE64', 'token.pickle')
+    # Decode service account (preferred for server deployments)
+    if decode_file_from_env('GOOGLE_SERVICE_ACCOUNT_BASE64', 'service-account.json'):
+        print("Service account configured - will use service account authentication")
+    else:
+        # Fall back to OAuth credentials
+        print("No service account found - falling back to OAuth")
+        decode_file_from_env('GOOGLE_CREDENTIALS_BASE64', 'credentials.json')
+        decode_file_from_env('GOOGLE_TOKEN_BASE64', 'token.pickle')
 
     print("Done!")
