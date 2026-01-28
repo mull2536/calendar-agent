@@ -26,6 +26,25 @@ def verify_request():
         token = request.headers.get('X-Webhook-Token')
         if token != config.WEBHOOK_SECRET:
             abort(403, description="Invalid webhook token")
+@app.route('/debug', methods=['GET'])
+def debug():
+    """Debug endpoint to check credentials status"""
+    import os
+    debug_info = {
+        "credentials_exists": os.path.exists('credentials.json'),
+        "token_exists": os.path.exists('token.pickle'),
+        "env_vars_set": {
+            "GOOGLE_CREDENTIALS_BASE64": bool(os.getenv('GOOGLE_CREDENTIALS_BASE64')),
+            "GOOGLE_TOKEN_BASE64": bool(os.getenv('GOOGLE_TOKEN_BASE64')),
+            "OPENAI_API_KEY": bool(os.getenv('OPENAI_API_KEY'))
+        }
+    }
+    if os.path.exists('credentials.json'):
+        debug_info["credentials_size"] = os.path.getsize('credentials.json')
+    if os.path.exists('token.pickle'):
+        debug_info["token_size"] = os.path.getsize('token.pickle')
+    return jsonify(debug_info)
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
     """Health check endpoint - also handles ElevenLabs calls with query parameter"""
