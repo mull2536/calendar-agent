@@ -26,10 +26,25 @@ def decode_file_from_env(env_var_name, output_filename):
 
 if __name__ == "__main__":
     print("Decoding credentials from environment variables...")
+    print(f"Current working directory: {os.getcwd()}")
+
+    # Check which env vars are set
+    service_account_set = bool(os.getenv('GOOGLE_SERVICE_ACCOUNT_BASE64'))
+    oauth_creds_set = bool(os.getenv('GOOGLE_CREDENTIALS_BASE64'))
+    oauth_token_set = bool(os.getenv('GOOGLE_TOKEN_BASE64'))
+
+    print(f"GOOGLE_SERVICE_ACCOUNT_BASE64 set: {service_account_set}")
+    print(f"GOOGLE_CREDENTIALS_BASE64 set: {oauth_creds_set}")
+    print(f"GOOGLE_TOKEN_BASE64 set: {oauth_token_set}")
 
     # Decode service account (preferred for server deployments)
     if decode_file_from_env('GOOGLE_SERVICE_ACCOUNT_BASE64', 'service-account.json'):
         print("Service account configured - will use service account authentication")
+        # Verify file was created
+        if os.path.exists('service-account.json'):
+            print(f"Verified: service-account.json exists ({os.path.getsize('service-account.json')} bytes)")
+        else:
+            print("ERROR: service-account.json was not created!")
     else:
         # Fall back to OAuth credentials
         print("No service account found - falling back to OAuth")
