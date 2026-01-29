@@ -31,14 +31,19 @@ def debug():
     """Debug endpoint to check credentials status"""
     import os
     debug_info = {
+        "service_account_exists": os.path.exists('service-account.json'),
         "credentials_exists": os.path.exists('credentials.json'),
         "token_exists": os.path.exists('token.pickle'),
         "env_vars_set": {
+            "GOOGLE_SERVICE_ACCOUNT_BASE64": bool(os.getenv('GOOGLE_SERVICE_ACCOUNT_BASE64')),
             "GOOGLE_CREDENTIALS_BASE64": bool(os.getenv('GOOGLE_CREDENTIALS_BASE64')),
             "GOOGLE_TOKEN_BASE64": bool(os.getenv('GOOGLE_TOKEN_BASE64')),
-            "OPENAI_API_KEY": bool(os.getenv('OPENAI_API_KEY'))
+            "OPENAI_API_KEY": bool(os.getenv('OPENAI_API_KEY')),
+            "CALENDAR_ID": os.getenv('CALENDAR_ID', 'not set')
         }
     }
+    if os.path.exists('service-account.json'):
+        debug_info["service_account_size"] = os.path.getsize('service-account.json')
     if os.path.exists('credentials.json'):
         debug_info["credentials_size"] = os.path.getsize('credentials.json')
     if os.path.exists('token.pickle'):
