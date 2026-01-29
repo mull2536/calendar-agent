@@ -23,11 +23,16 @@ def get_calendar_service():
     service_account_file = 'service-account.json'
     if os.path.exists(service_account_file):
         print(f"Using service account authentication from {service_account_file}")
-        creds = service_account.Credentials.from_service_account_file(
-            service_account_file, scopes=SCOPES)
-        # Service account credentials are always valid, no need to refresh
-        service = build('calendar', 'v3', credentials=creds)
-        return service
+        try:
+            creds = service_account.Credentials.from_service_account_file(
+                service_account_file, scopes=SCOPES)
+            # Service account credentials are always valid, no need to refresh
+            service = build('calendar', 'v3', credentials=creds)
+            return service
+        except Exception as e:
+            print(f"Error loading service account: {e}")
+            print(f"Falling back to OAuth authentication")
+            # Continue to OAuth fallback below
 
     # Fall back to OAuth if no service account
     print("No service account found, using OAuth authentication")
